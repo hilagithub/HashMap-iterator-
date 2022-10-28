@@ -14,6 +14,23 @@
 #define MIN_LOAD_FACTOR 0.25
 #define MULT_CONST 2
 
+/**
+ * this header contains an implementation of hashmap including a
+ * const iterator . the hashmap implemented as follows:
+ * #_map- is a pointer to pointers "buckets"
+ *   of elem as each element is a pair of key and
+ *   value (template).
+ *   each "bucket" is a linked list of elements
+ *   if empty- points to nullptr
+ * #size_buckets_- contains the sizes of each "bucket"
+ * #size_- size of the hashmap (how many elements are in)
+ * #capacity_-number of "buckets"
+ *
+ *
+ * #const iterator-iterate over the elements using operators it++
+ * and ++it also != and == operators * and ->
+ *
+ * */
 
 
 
@@ -53,7 +70,7 @@ public:
             }
 
         }
-
+        /** it++ **/
         self_type operator++(int)
         {
             assert(bucket_<capacity_);
@@ -79,6 +96,7 @@ public:
             }
 
         }
+        /** ++it **/
         self_type operator++()
         {
             assert(bucket_<capacity_);
@@ -109,6 +127,7 @@ public:
         {
             return &ptr_elem_->data;
         }
+        /** does the key and value of elem equal **/
         bool operator==(const self_type& rhs)
         {
             return ptr_elem_->data.first==rhs.ptr_elem_->data.first
@@ -129,6 +148,8 @@ public:
         friend class HashMap<KeyT,ValueT>;
     };
 
+    /** constructor- new (empty) hashmap with capacity of 16 and
+     * size 0 */
     HashMap():_capacity(16),_size(0),
     _map(new elem<KeyT,ValueT>*[_capacity]),
     size_buckets_(new size_t[_capacity]){
@@ -140,7 +161,8 @@ public:
         }
 
     }
-
+    /** constructor- new hashmap containing all elements of
+     * Keyt:Valuet respectively */
     HashMap(std::vector<KeyT> Keyt, std::vector<ValueT> Valuet)
     :_capacity(16),_size(0),_map(new elem<KeyT,ValueT>*[_capacity]),
             size_buckets_(new size_t[_capacity])
@@ -188,7 +210,7 @@ public:
         }
 
     }
-
+    /**  copy constructor */
     HashMap( const HashMap  &hm):_capacity(hm._capacity),_size(hm
     ._size),
     _map(new elem<KeyT,ValueT>*[hm._capacity]),size_buckets_(new size_t[_capacity]){
@@ -222,7 +244,7 @@ public:
         }
     }
 
-
+    /** destructor*/
     ~HashMap(){
         size_buckets_=new size_t[_capacity];
         for (int i = 0; i <_capacity; ++i)
@@ -240,14 +262,14 @@ public:
         }
         delete[] _map;
     }
-
+    /**hash function */
     size_t hashFunc(KeyT key){
         size_t key_hash = std::hash<KeyT>()(key);
         size_t hashRes= key_hash & (_capacity -1);
         std::cout<<hashRes<<" hash result"<<std::endl;
         return hashRes;
     }
-
+    /** is this key in hashmap*/
     bool contains_key(KeyT key){
          int hash_index= hashFunc(key);
          elem<KeyT,ValueT>* entry=(_map)[hash_index];
@@ -259,7 +281,8 @@ public:
          }
         return false;
     }
-
+    /** return value of the given key if not inside map throw
+     * exception*/
     ValueT& at(KeyT key){
         if(!contains_key(key)){
             throw std::invalid_argument("invalid_key");
@@ -273,7 +296,7 @@ public:
             entry=entry->next;
         }
     }
-
+    /** erase elem with given key . if not in map return false*/
     bool erase(KeyT key){
         ///not in map
         if(!contains_key(key)){
@@ -327,6 +350,7 @@ public:
         return _size==0;
     }
 
+    /** is this element in map*/
     bool in_bucket(elem<KeyT,ValueT>* element){
         if(!element  || element==NULL){
             return false;
@@ -343,20 +367,18 @@ public:
 
     }
 
+    /** return number of elements in bucket of given key if not in
+     * map throw an exception*/
     int bucket_size(KeyT key){
         if(!contains_key(key)){
             throw std::invalid_argument("invalid_key");
         }
         int hash_index= hashFunc(key);
-//        elem<KeyT,ValueT>* entry=(_map)[hash_index];
-//        int size_bucket=0;
-//        while(entry){
-//            size_bucket+=1;
-//            entry=entry->next;
-//        }
+
         return size_buckets_[hash_index];
     }
 
+    /** return index bucket of given key*/
     int bucket_index(KeyT key){
         if(!contains_key(key)){
             throw std::invalid_argument("invalid_key");
@@ -365,7 +387,7 @@ public:
     }
 
 
-
+    /** are hashmap equal to given hashmap*/
     bool equal(HashMap const &hm){
         if(hm._capacity!=_capacity ||
            hm._size!=_size ){
@@ -389,11 +411,13 @@ public:
     }
 
 
+    /** return size of hashmap divided by it's capacity*/
     float get_load_factor(){
         float lfactor=(float)_size/_capacity;
         return lfactor;
     }
 
+    /**clear all elements from map-buckets will be empty and size e*/
     void clear(){
         for (int i = 0; i <_capacity; ++i)
         {
@@ -412,6 +436,7 @@ public:
         _size=0;
     }
 
+    /** insert elements to newly sized map */
     void resize_helper(){
         elem<KeyT,ValueT>** new_map=new elem<KeyT,ValueT>*[_capacity];
         size_t tmp_size=_size;
@@ -474,7 +499,10 @@ public:
 
 
     }
-
+    /** if after inserting load factor is grater than
+     * MAX_LOAD_FACTOR  capacity will be divided by 2 .
+     * if less than MIN_LOADER_FACTOR- capacity will be multiplied by
+     * 2 */
     void resize(){
         float lf=get_load_factor();
         if(lf>MAX_LOAD_FACTOR){
@@ -539,20 +567,19 @@ public:
         return true;
     }
 
+    /**return first iterator of map*/
     const_iterator begin() const
     {
         int i=0;
         while (i<_capacity && size_buckets_[i]==0){
             i+=1;
         }
-//        (pointer* ptr_map,pointer ptr_elem,size_t
-//        bucket,size_t* size_buckets,size_t index_elem,size_t
-//        capacity)
         return const_iterator(_map,_map[i],i,size_buckets_,0,
                               _capacity);
 
     }
 
+    /**return last iterator of map*/
     const_iterator end() const
     {
         ///i-last bucket with element
@@ -565,6 +592,7 @@ public:
 
     }
 
+    /** assign given map to our map*/
     HashMap<KeyT,ValueT>& operator=(const HashMap<KeyT,ValueT>& hm){
         _map=new elem<KeyT,ValueT>*[hm._capacity];
         _capacity=hm._capacity;
@@ -603,6 +631,7 @@ public:
 
     }
 
+    /** return value of given key*/
     ValueT& operator[](const KeyT& key){
         if(!contains_key(key)){
             insert(key,ValueT());
@@ -611,6 +640,7 @@ public:
         return at(key);
     }
 
+    /** return is given hashmap equal to our*/
     bool operator==(const HashMap<KeyT,ValueT>& hm){
         bool res=equal(hm);
         return res;
